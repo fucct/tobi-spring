@@ -1,6 +1,12 @@
 package com.fucct.tobispring.dao;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
 public class DaoFactory {
+
+    @Bean
     public UserDao userDao() {
         ConnectionMaker connectionMaker = connectionMaker();
 
@@ -19,7 +25,13 @@ public class DaoFactory {
         return new MessageDao(connectionMaker);
     }
 
-    private NConnectionMaker connectionMaker() {
+    @Bean
+    public ConnectionMaker connectionMaker() {
+        return new CountingConnectionMaker(realConnectionMaker());
+    }
+
+    @Bean
+    public NConnectionMaker realConnectionMaker() {
         return new NConnectionMaker();
     }
 }
