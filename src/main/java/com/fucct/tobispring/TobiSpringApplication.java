@@ -2,17 +2,17 @@ package com.fucct.tobispring;
 
 import java.sql.SQLException;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import com.fucct.tobispring.dao.NUserDao;
+import com.fucct.tobispring.dao.ConnectionMaker;
+import com.fucct.tobispring.dao.DaoFactory;
+import com.fucct.tobispring.dao.NConnectionMaker;
 import com.fucct.tobispring.dao.UserDao;
 import com.fucct.tobispring.user.User;
 
 public class TobiSpringApplication {
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException {
-        UserDao dao = new NUserDao();
+        ConnectionMaker connectionMaker = new NConnectionMaker();
+        UserDao dao = new DaoFactory().userDao();
 
         User user = new User();
         user.setId("DD");

@@ -7,9 +7,15 @@ import java.sql.SQLException;
 
 import com.fucct.tobispring.user.User;
 
-public abstract class UserDao {
+public class UserDao {
+    private final ConnectionMaker connectionMaker;
+
+    public UserDao(final ConnectionMaker connectionMaker) {
+        this.connectionMaker = connectionMaker;
+    }
+
     public void add(User user) throws ClassNotFoundException, SQLException {
-        Connection c = getConnection();
+        Connection c = connectionMaker.makeNewConnection();
 
         PreparedStatement ps = c.prepareStatement(
             "insert into accounts(id, name, password) values(?,?,?)");
@@ -24,7 +30,7 @@ public abstract class UserDao {
     }
 
     public User get(String id) throws ClassNotFoundException, SQLException {
-        Connection c = getConnection();
+        Connection c = connectionMaker.makeNewConnection();
         PreparedStatement ps = c
             .prepareStatement("select * from accounts where id = ?");
         ps.setString(1, id);
@@ -42,6 +48,4 @@ public abstract class UserDao {
 
         return user;
     }
-
-    abstract protected Connection getConnection() throws ClassNotFoundException, SQLException;
 }
