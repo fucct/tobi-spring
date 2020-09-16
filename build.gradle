@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'mysql', name: 'mysql-connector-java', version: '5.0.8'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.44'
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     runtimeOnly 'com.h2database:h2'

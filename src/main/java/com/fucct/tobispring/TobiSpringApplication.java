@@ -18,11 +18,8 @@ public class TobiSpringApplication {
         ApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class);
         final UserDao userDao1 = context.getBean("userDao", UserDao.class);
         final UserDao userDao2 = context.getBean("userDao", UserDao.class);
-        final CountingConnectionMaker c = context.getBean("connectionMaker",
-            CountingConnectionMaker.class);
 
         System.out.println(userDao1 == userDao2);
-        System.out.println(c.getCount());
         User user = new User();
         user.setId("DD");
         user.setName("김태헌");
@@ -31,13 +28,10 @@ public class TobiSpringApplication {
 
         System.out.println(user.getId() + "등록 성공");
 
-        System.out.println(c.getCount());
-
         User user2 = userDao1.get(user.getId());
         System.out.println(user2.getName());
         System.out.println(user2.getPassword());
         System.out.println(user2.getId() + " 조회 성공");
-        System.out.println(c.getCount());
     }
 
 }
