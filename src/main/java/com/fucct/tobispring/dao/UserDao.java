@@ -4,8 +4,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 import javax.sql.DataSource;
+
+import org.springframework.dao.EmptyResultDataAccessException;
 
 import com.fucct.tobispring.user.User;
 
@@ -38,16 +41,48 @@ public class UserDao {
         ps.setString(1, id);
 
         ResultSet rs = ps.executeQuery();
-        rs.next();
-        User user = new User();
-        user.setId(rs.getString("id"));
-        user.setName(rs.getString("name"));
-        user.setPassword(rs.getString("password"));
+        User user = null;
+        if(rs.next()) {
+            user = new User();
+            user.setId(rs.getString("id"));
+            user.setName(rs.getString("name"));
+            user.setPassword(rs.getString("password"));
+        }
 
         rs.close();
         ps.close();
         c.close();
 
+        if (Objects.isNull(user)) {
+            throw new EmptyResultDataAccessException(1);
+        }
+
         return user;
+    }
+
+    public void deleteAll() throws SQLException {
+        final Connection connection = dataSource.getConnection();
+
+        final PreparedStatement ps = connection.prepareStatement("delete from accounts");
+        ps.executeUpdate();
+
+        ps.close();
+        connection.close();
+    }
+
+    public int getCount() throws SQLException {
+        final Connection connection = dataSource.getConnection();
+
+        final PreparedStatement ps = connection.prepareStatement("select count(*) from accounts");
+
+        final ResultSet rs = ps.executeQuery();
+        rs.next();
+        int count = rs.getInt(1);
+
+        rs.close();
+        ps.close();
+        connection.close();
+
+        return count;
     }
 }

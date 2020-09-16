@@ -19,19 +19,14 @@ public class TobiSpringApplication {
         final UserDao userDao1 = context.getBean("userDao", UserDao.class);
         final UserDao userDao2 = context.getBean("userDao", UserDao.class);
 
-        System.out.println(userDao1 == userDao2);
         User user = new User();
         user.setId("DD");
         user.setName("김태헌");
         user.setPassword("password");
         userDao1.add(user);
 
-        System.out.println(user.getId() + "등록 성공");
 
         User user2 = userDao1.get(user.getId());
-        System.out.println(user2.getName());
-        System.out.println(user2.getPassword());
-        System.out.println(user2.getId() + " 조회 성공");
     }
 
 }
