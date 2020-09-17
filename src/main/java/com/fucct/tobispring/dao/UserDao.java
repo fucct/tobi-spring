@@ -12,7 +12,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 
 import com.fucct.tobispring.user.User;
 
-public class UserDao {
+public abstract class UserDao {
     private final DataSource dataSource;
 
     public UserDao(final DataSource dataSource) {
@@ -20,69 +20,139 @@ public class UserDao {
     }
 
     public void add(User user) throws ClassNotFoundException, SQLException {
-        Connection c = dataSource.getConnection();
+        Connection c = null;
+        PreparedStatement ps = null;
+        try {
+            c = dataSource.getConnection();
+            ps = c.prepareStatement(
+                "insert into accounts(id, name, password) values(?,?,?)");
+            ps.setString(1, user.getId());
+            ps.setString(2, user.getName());
+            ps.setString(3, user.getPassword());
 
-        PreparedStatement ps = c.prepareStatement(
-            "insert into accounts(id, name, password) values(?,?,?)");
-        ps.setString(1, user.getId());
-        ps.setString(2, user.getName());
-        ps.setString(3, user.getPassword());
-
-        ps.executeUpdate();
-
-        ps.close();
-        c.close();
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
     }
 
     public User get(String id) throws ClassNotFoundException, SQLException {
-        Connection c = dataSource.getConnection();
-        PreparedStatement ps = c
-            .prepareStatement("select * from accounts where id = ?");
-        ps.setString(1, id);
+        Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
-        ResultSet rs = ps.executeQuery();
-        User user = null;
-        if(rs.next()) {
-            user = new User();
-            user.setId(rs.getString("id"));
-            user.setName(rs.getString("name"));
-            user.setPassword(rs.getString("password"));
+        try {
+            c = dataSource.getConnection();
+            ps = c.prepareStatement("select * from accounts where id = ?");
+            ps.setString(1, id);
+            rs = ps.executeQuery();
+            User user = null;
+            if (rs.next()) {
+                user = new User();
+                user.setId(rs.getString("id"));
+                user.setName(rs.getString("name"));
+                user.setPassword(rs.getString("password"));
+            }
+            if (Objects.isNull(user)) {
+                throw new EmptyResultDataAccessException(1);
+            }
+
+            return user;
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                }
+            }
         }
-
-        rs.close();
-        ps.close();
-        c.close();
-
-        if (Objects.isNull(user)) {
-            throw new EmptyResultDataAccessException(1);
-        }
-
-        return user;
     }
 
     public void deleteAll() throws SQLException {
-        final Connection connection = dataSource.getConnection();
-
-        final PreparedStatement ps = connection.prepareStatement("delete from accounts");
-        ps.executeUpdate();
-
-        ps.close();
-        connection.close();
+        Connection c = null;
+        PreparedStatement ps = null;
+        try {
+            c = dataSource.getConnection();
+            ps = makeStatement(c);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (c != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
     }
 
+    protected abstract PreparedStatement makeStatement(final Connection connection) throws SQLException;
+
     public int getCount() throws SQLException {
-        final Connection connection = dataSource.getConnection();
-
-        final PreparedStatement ps = connection.prepareStatement("select count(*) from accounts");
-
-        final ResultSet rs = ps.executeQuery();
-        rs.next();
-        int count = rs.getInt(1);
-
-        rs.close();
-        ps.close();
-        connection.close();
-
-        return count;
+        Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            c = dataSource.getConnection();
+            ps = c.prepareStatement("select count(*) from accounts");
+            rs = ps.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
     }
 }
