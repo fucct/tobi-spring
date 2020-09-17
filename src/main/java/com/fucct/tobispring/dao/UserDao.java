@@ -13,10 +13,12 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import com.fucct.tobispring.user.User;
 
 public class UserDao {
-    private final DataSource dataSource;
+    private DataSource dataSource;
+    private JdbcContext context;
 
-    public UserDao(final DataSource dataSource) {
+    public UserDao(DataSource dataSource) {
         this.dataSource = dataSource;
+        this.context = new JdbcContext(dataSource);
     }
 
     public void add(User user) throws ClassNotFoundException, SQLException {
@@ -29,116 +31,97 @@ public class UserDao {
 
             return ps;
         };
-        jdbcContextWithStatementStrategy(st);
+        context.workWithStatementStrategy(st);
     }
 
-    public User get(String id) throws ClassNotFoundException, SQLException {
-        Connection c = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+    // public User get(String id) throws ClassNotFoundException, SQLException {
+    //     Connection c = null;
+    //     PreparedStatement ps = null;
+    //     ResultSet rs = null;
+    //
+    //     try {
+    //         c = dataSource.getConnection();
+    //         ps = c.prepareStatement("select * from accounts where id = ?");
+    //         ps.setString(1, id);
+    //         rs = ps.executeQuery();
+    //         User user = null;
+    //         if (rs.next()) {
+    //             user = new User();
+    //             user.setId(rs.getString("id"));
+    //             user.setName(rs.getString("name"));
+    //             user.setPassword(rs.getString("password"));
+    //         }
+    //         if (Objects.isNull(user)) {
+    //             throw new EmptyResultDataAccessException(1);
+    //         }
+    //
+    //         return user;
+    //     } catch (SQLException e) {
+    //         throw e;
+    //     } finally {
+    //         if (ps != null) {
+    //             try {
+    //                 ps.close();
+    //             } catch (SQLException e) {
+    //             }
+    //         }
+    //         if (c != null) {
+    //             try {
+    //                 c.close();
+    //             } catch (SQLException e) {
+    //             }
+    //         }
+    //         if (rs != null) {
+    //             try {
+    //                 rs.close();
+    //             } catch (SQLException e) {
+    //             }
+    //         }
+    //     }
+    // }
 
-        try {
-            c = dataSource.getConnection();
-            ps = c.prepareStatement("select * from accounts where id = ?");
-            ps.setString(1, id);
-            rs = ps.executeQuery();
-            User user = null;
-            if (rs.next()) {
-                user = new User();
-                user.setId(rs.getString("id"));
-                user.setName(rs.getString("name"));
-                user.setPassword(rs.getString("password"));
-            }
-            if (Objects.isNull(user)) {
-                throw new EmptyResultDataAccessException(1);
-            }
 
-            return user;
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
-    }
-
-    public void jdbcContextWithStatementStrategy(StatementStrategy strategy) throws SQLException {
-        Connection c = null;
-        PreparedStatement ps = null;
-        try {
-            c = dataSource.getConnection();
-            ps = strategy.makeStatement(c);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            if (c != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
-    }
 
     public void deleteAll() throws SQLException {
         StatementStrategy st = connection -> connection.prepareStatement("delete from accounts");
-        jdbcContextWithStatementStrategy(st);
+        context.workWithStatementStrategy(st);
     }
 
-    public int getCount() throws SQLException {
-        Connection c = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            c = dataSource.getConnection();
-            ps = c.prepareStatement("select count(*) from accounts");
-            rs = ps.executeQuery();
-            rs.next();
-            return rs.getInt(1);
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
+    // public int getCount() throws SQLException {
+    //     Connection c = null;
+    //     PreparedStatement ps = null;
+    //     ResultSet rs = null;
+    //     try {
+    //         c = dataSource.getConnection();
+    //         ps = c.prepareStatement("select count(*) from accounts");
+    //         rs = ps.executeQuery();
+    //         rs.next();
+    //         return rs.getInt(1);
+    //     } catch (SQLException e) {
+    //         throw e;
+    //     } finally {
+    //         if (ps != null) {
+    //             try {
+    //                 ps.close();
+    //             } catch (SQLException e) {
+    //             }
+    //         }
+    //         if (c != null) {
+    //             try {
+    //                 c.close();
+    //             } catch (SQLException e) {
+    //             }
+    //         }
+    //         if (rs != null) {
+    //             try {
+    //                 rs.close();
+    //             } catch (SQLException e) {
+    //             }
+    //         }
+    //     }
+    // }
+
+    public void setContext(final DataSource dataSource) {
+        this.context.setDataSource(dataSource);
     }
 }
