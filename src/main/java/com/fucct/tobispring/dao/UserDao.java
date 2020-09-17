@@ -12,7 +12,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 
 import com.fucct.tobispring.user.User;
 
-public abstract class UserDao {
+public class UserDao {
     private final DataSource dataSource;
 
     public UserDao(final DataSource dataSource) {
@@ -20,33 +20,16 @@ public abstract class UserDao {
     }
 
     public void add(User user) throws ClassNotFoundException, SQLException {
-        Connection c = null;
-        PreparedStatement ps = null;
-        try {
-            c = dataSource.getConnection();
-            ps = c.prepareStatement(
+        StatementStrategy st = connection -> {
+            PreparedStatement ps = connection.prepareStatement(
                 "insert into accounts(id, name, password) values(?,?,?)");
             ps.setString(1, user.getId());
             ps.setString(2, user.getName());
             ps.setString(3, user.getPassword());
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
+            return ps;
+        };
+        jdbcContextWithStatementStrategy(st);
     }
 
     public User get(String id) throws ClassNotFoundException, SQLException {
@@ -95,12 +78,12 @@ public abstract class UserDao {
         }
     }
 
-    public void deleteAll() throws SQLException {
+    public void jdbcContextWithStatementStrategy(StatementStrategy strategy) throws SQLException {
         Connection c = null;
         PreparedStatement ps = null;
         try {
             c = dataSource.getConnection();
-            ps = makeStatement(c);
+            ps = strategy.makeStatement(c);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw e;
@@ -120,7 +103,10 @@ public abstract class UserDao {
         }
     }
 
-    protected abstract PreparedStatement makeStatement(final Connection connection) throws SQLException;
+    public void deleteAll() throws SQLException {
+        StatementStrategy st = connection -> connection.prepareStatement("delete from accounts");
+        jdbcContextWithStatementStrategy(st);
+    }
 
     public int getCount() throws SQLException {
         Connection c = null;

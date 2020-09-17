@@ -10,9 +10,4 @@ public class UserDaoDeleteAll extends UserDao {
     public UserDaoDeleteAll(final DataSource dataSource) {
         super(dataSource);
     }
-
-    @Override
-    protected PreparedStatement makeStatement(final Connection connection) throws SQLException {
-        return connection.prepareStatement("delete from accounts");
-    }
 }
