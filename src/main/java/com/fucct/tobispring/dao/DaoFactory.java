@@ -11,7 +11,7 @@ public class DaoFactory {
 
     @Bean
     public UserDao userDao() {
-        return new UserDao(jdbcContext());
+        return new UserDao(dataSource());
     }
 
     @Bean

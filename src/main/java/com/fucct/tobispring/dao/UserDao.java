@@ -34,92 +34,91 @@ public class UserDao {
         context.workWithStatementStrategy(st);
     }
 
-    // public User get(String id) throws ClassNotFoundException, SQLException {
-    //     Connection c = null;
-    //     PreparedStatement ps = null;
-    //     ResultSet rs = null;
-    //
-    //     try {
-    //         c = dataSource.getConnection();
-    //         ps = c.prepareStatement("select * from accounts where id = ?");
-    //         ps.setString(1, id);
-    //         rs = ps.executeQuery();
-    //         User user = null;
-    //         if (rs.next()) {
-    //             user = new User();
-    //             user.setId(rs.getString("id"));
-    //             user.setName(rs.getString("name"));
-    //             user.setPassword(rs.getString("password"));
-    //         }
-    //         if (Objects.isNull(user)) {
-    //             throw new EmptyResultDataAccessException(1);
-    //         }
-    //
-    //         return user;
-    //     } catch (SQLException e) {
-    //         throw e;
-    //     } finally {
-    //         if (ps != null) {
-    //             try {
-    //                 ps.close();
-    //             } catch (SQLException e) {
-    //             }
-    //         }
-    //         if (c != null) {
-    //             try {
-    //                 c.close();
-    //             } catch (SQLException e) {
-    //             }
-    //         }
-    //         if (rs != null) {
-    //             try {
-    //                 rs.close();
-    //             } catch (SQLException e) {
-    //             }
-    //         }
-    //     }
-    // }
+    public User get(String id) throws ClassNotFoundException, SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            c = dataSource.getConnection();
+            ps = c.prepareStatement("select * from accounts where id = ?");
+            ps.setString(1, id);
+            rs = ps.executeQuery();
+            User user = null;
+            if (rs.next()) {
+                user = new User();
+                user.setId(rs.getString("id"));
+                user.setName(rs.getString("name"));
+                user.setPassword(rs.getString("password"));
+            }
+            if (Objects.isNull(user)) {
+                throw new EmptyResultDataAccessException(1);
+            }
+
+            return user;
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
 
 
 
     public void deleteAll() throws SQLException {
-        StatementStrategy st = connection -> connection.prepareStatement("delete from accounts");
-        context.workWithStatementStrategy(st);
+        context.executeSql("delete from accounts");
     }
 
-    // public int getCount() throws SQLException {
-    //     Connection c = null;
-    //     PreparedStatement ps = null;
-    //     ResultSet rs = null;
-    //     try {
-    //         c = dataSource.getConnection();
-    //         ps = c.prepareStatement("select count(*) from accounts");
-    //         rs = ps.executeQuery();
-    //         rs.next();
-    //         return rs.getInt(1);
-    //     } catch (SQLException e) {
-    //         throw e;
-    //     } finally {
-    //         if (ps != null) {
-    //             try {
-    //                 ps.close();
-    //             } catch (SQLException e) {
-    //             }
-    //         }
-    //         if (c != null) {
-    //             try {
-    //                 c.close();
-    //             } catch (SQLException e) {
-    //             }
-    //         }
-    //         if (rs != null) {
-    //             try {
-    //                 rs.close();
-    //             } catch (SQLException e) {
-    //             }
-    //         }
-    //     }
-    // }
+    public int getCount() throws SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            c = dataSource.getConnection();
+            ps = c.prepareStatement("select count(*) from accounts");
+            rs = ps.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
 
     public void setContext(final DataSource dataSource) {
         this.context.setDataSource(dataSource);

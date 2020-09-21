@@ -26,7 +26,7 @@ public class TobiSpringApplication {
         userDao1.add(user);
 
 
-        User user2 = userDao1.get(user.getId());
+        // User user2 = userDao1.get(user.getId());
     }
 
 }
