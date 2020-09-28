@@ -1,38 +1,19 @@
 package com.fucct.tobispring.dao;
 
-import java.sql.SQLException;
-
-import javax.sql.DataSource;
-
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import java.util.List;
 
 import com.fucct.tobispring.user.User;
 
-public class UserDao {
-    private final JdbcTemplate jdbcTemplate;
-    private RowMapper<User> userRowMapper;
+public interface UserDao {
+    void add(User user);
 
-    public UserDao(DataSource dataSource) {
-        this.jdbcTemplate = new JdbcTemplate(dataSource);
-    }
+    User get(String id);
 
-    public void add(User user) throws ClassNotFoundException, SQLException {
-        this.jdbcTemplate.update("insert into accounts(id, name, password) values(?,?,?)", user.getId(), user.getName(),
-            user.getPassword());
-    }
+    List<User> getAll();
 
-    public User get(String id) throws ClassNotFoundException, SQLException {
-        return this.jdbcTemplate.queryForObject("select * from accounts where accounts.id = ?",
-            new Object[] {id},
-            userRowMapper);
-     }
+    void deleteAll();
 
-    public void deleteAll() throws SQLException {
-        this.jdbcTemplate.update(connection -> connection.prepareStatement("delete from accounts"));
-    }
+    int getCount();
 
-    public Integer getCount() throws SQLException {
-        return this.jdbcTemplate.queryForObject("select count(*) from accounts", Integer.class);
-    }
+    void update(User user);
 }

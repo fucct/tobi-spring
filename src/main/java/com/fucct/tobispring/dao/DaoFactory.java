@@ -6,12 +6,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 
+import com.fucct.tobispring.user.DefaultUserLevelUpgradePolicy;
+import com.fucct.tobispring.user.UserLevelUpgradePolicy;
+import com.fucct.tobispring.user.UserService;
+
 @Configuration
 public class DaoFactory {
 
     @Bean
     public UserDao userDao() {
-        return new UserDao(dataSource());
+        return new UserDaoJdbc(dataSource());
     }
 
     @Bean
@@ -51,5 +55,15 @@ public class DaoFactory {
         dataSource.setPassword("C940429kk!!");
 
         return dataSource;
+    }
+
+    @Bean
+    public UserService userService() {
+        return new UserService(userLevelUpgradePolicy(), userDao());
+    }
+
+    @Bean
+    public UserLevelUpgradePolicy userLevelUpgradePolicy() {
+        return new DefaultUserLevelUpgradePolicy(userDao());
     }
 }

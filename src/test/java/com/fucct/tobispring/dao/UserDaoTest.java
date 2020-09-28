@@ -4,13 +4,21 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.sql.SQLException;
 
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
+import com.fucct.tobispring.user.Level;
 import com.fucct.tobispring.user.User;
 
 @SpringJUnitConfig
@@ -18,6 +26,9 @@ import com.fucct.tobispring.user.User;
 class UserDaoTest {
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private DataSource dataSource;
 
     private User user1;
     private User user2;
@@ -53,7 +64,7 @@ class UserDaoTest {
     }
 
     @Test
-    void getCount() throws SQLException, ClassNotFoundException {
+    void getCount() {
         userDao.deleteAll();
         assertThat(userDao.getCount()).isEqualTo(0);
 
@@ -65,5 +76,47 @@ class UserDaoTest {
 
         userDao.add(user3);
         assertThat(userDao.getCount()).isEqualTo(3);
+    }
+
+    @Test
+    void duplicateKey() {
+        userDao.deleteAll();
+
+        userDao.add(user1);
+        assertThatThrownBy(() -> userDao.add(user1))
+            .isInstanceOf(DuplicateKeyException.class);
+    }
+
+    @Test
+    void duplicateKey2() {
+        userDao.deleteAll();
+
+        try {
+            userDao.add(user1);
+        } catch (DuplicateKeyException ex) {
+            SQLException sqlEX = (SQLException)ex.getRootCause();
+            SQLExceptionTranslator set = new SQLErrorCodeSQLExceptionTranslator(dataSource);
+            assertThat(set.translate(null, null, sqlEX))
+                .isInstanceOf(DuplicateKeyException.class);
+        }
+    }
+
+    @Test
+    void update() {
+        userDao.deleteAll();
+
+        userDao.add(user1);
+        userDao.add(user2);
+
+        user1.setName("토토");
+        user1.setPassword("cream");
+        user1.setLevel(Level.GOLD);
+        user1.setLogin(1000);
+        user1.setRecommend(999);
+
+        userDao.update(user1);
+
+        assertThat(userDao.get(user1.getId())).isEqualToComparingFieldByField(user1);
+        assertThat(userDao.get(user2.getId())).isEqualToComparingFieldByField(user2);
     }
 }
