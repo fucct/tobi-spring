@@ -1,6 +1,9 @@
 package com.fucct.tobispring.user;
 
 public class User {
+    public static final int MIN_LOGCOUNT_FOR_SILVER = 50;
+    public static final int MIN_RECCOMEND_FOR_GOLD = 30;
+
     private String id;
     private String name;
     private String password;
@@ -35,7 +38,22 @@ public class User {
         if (nextLevel == null) {
             throw new IllegalStateException(this.level + " 은 업데이트 불가능합니다.");
         }else{
-            this.level = nextLevel;
+            if (canUpgradeLevel()) {
+                this.level = nextLevel;
+            }
+        }
+    }
+
+    public boolean canUpgradeLevel() {
+        switch (this.level) {
+            case BASIC:
+                return getLogin() >= MIN_LOGCOUNT_FOR_SILVER;
+            case SILVER:
+                return getRecommend() >= MIN_RECCOMEND_FOR_GOLD;
+            case GOLD:
+                return false;
+            default:
+                throw new IllegalArgumentException("Unknown Level: " + this.level);
         }
     }
 

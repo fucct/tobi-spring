@@ -1,10 +1,11 @@
 package com.fucct.tobispring.user;
 
-import java.util.List;
+import java.util.Properties;
 
 import com.fucct.tobispring.dao.UserDao;
+import com.sun.xml.internal.org.jvnet.mimepull.MIMEMessage;
 
-public class DefaultUserLevelUpgradePolicy implements UserLevelUpgradePolicy{
+public class DefaultUserLevelUpgradePolicy implements UserLevelUpgradePolicy {
     public static final int MIN_LOGCOUNT_FOR_SILVER = 50;
     public static final int MIN_RECCOMEND_FOR_GOLD = 30;
 
@@ -31,9 +32,13 @@ public class DefaultUserLevelUpgradePolicy implements UserLevelUpgradePolicy{
 
     @Override
     public void upgradeLevel(final User user) {
-        if (canUpgradeLevel(user)) {
-            user.upgradeLevel();
-            userDao.update(user);
-        }
+        user.upgradeLevel();
+        userDao.update(user);
+        sendUpgradeEmail(user);
+    }
+
+    private void sendUpgradeEmail(final User user) {
+        Properties props = new Properties();
+        props.put("mail.smtp.host", "dqrd123@gmail.com");
     }
 }

@@ -5,8 +5,11 @@ import static com.fucct.tobispring.user.UserService.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,22 +34,26 @@ class UserServiceTest {
     @Autowired
     UserLevelUpgradePolicy userLevelUpgradePolicy;
 
+    @Autowired
+    private DataSource dataSource;
+
     List<User> users;
+
+
 
     static class TestUserService extends UserService {
         private String id;
 
         public TestUserService(final UserLevelUpgradePolicy userLevelUpgradePolicy,
-            final UserDao userDao, final String id) {
-            super(userLevelUpgradePolicy, userDao);
+            final UserDao userDao, final DataSource dataSource, final String id) {
+            super(userLevelUpgradePolicy, userDao, dataSource);
             this.id = id;
         }
 
-        public void upgradeLevel(User user) {
+        public void upgradeLevel(User user) throws SQLException {
             if (user.getId().equals(this.id)) {
                 throw new TestUserServiceException();
             }
-            super.upgradeLevels();
         }
     }
 
@@ -66,7 +73,7 @@ class UserServiceTest {
     }
 
     @Test
-    void upgradeLevels() {
+    void upgradeLevels() throws SQLException {
         userDao.deleteAll();
 
         for (User user : users) {
@@ -113,13 +120,13 @@ class UserServiceTest {
 
     @Test
     void upgradeOrNothing() {
-        UserService testUserService = new TestUserService(userLevelUpgradePolicy, userDao, users.get(3).getId());
+        TestUserService testUserService = new TestUserService(userLevelUpgradePolicy, userDao, dataSource, users.get(3).getId());
         userDao.deleteAll();
         users.forEach(userDao::add);
 
         try {
             testUserService.upgradeLevels();
-        } catch (TestUserServiceException e) {
+        } catch (TestUserServiceException | SQLException e) {
         }
         checkLevelUpgraded(users.get(1), false);
     }
