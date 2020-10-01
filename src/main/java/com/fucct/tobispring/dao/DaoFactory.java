@@ -4,7 +4,9 @@ import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import com.fucct.tobispring.user.DefaultUserLevelUpgradePolicy;
 import com.fucct.tobispring.user.UserLevelUpgradePolicy;
@@ -58,12 +60,19 @@ public class DaoFactory {
     }
 
     @Bean
+    public PlatformTransactionManager transactionManager() {
+        return new DataSourceTransactionManager(dataSource());
+    }
+
+    @Bean
     public UserService userService() {
-        return new UserService(userLevelUpgradePolicy(), userDao(), dataSource());
+        return new UserService(userLevelUpgradePolicy(), userDao(), transactionManager());
     }
 
     @Bean
     public UserLevelUpgradePolicy userLevelUpgradePolicy() {
         return new DefaultUserLevelUpgradePolicy(userDao());
     }
+
+
 }
