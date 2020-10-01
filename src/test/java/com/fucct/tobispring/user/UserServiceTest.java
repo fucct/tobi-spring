@@ -1,28 +1,31 @@
 package com.fucct.tobispring.user;
 
 import static com.fucct.tobispring.user.DefaultUserLevelUpgradePolicy.*;
-import static com.fucct.tobispring.user.UserService.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.sql.DataSource;
-
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import com.fucct.tobispring.dao.DaoFactory;
 import com.fucct.tobispring.dao.UserDao;
 
+@ExtendWith(MockitoExtension.class)
 @SpringJUnitConfig
-@Import({UserService.class, DaoFactory.class})
+@Import({UserServiceImpl.class, DaoFactory.class})
 class UserServiceTest {
 
     @Autowired
@@ -35,34 +38,31 @@ class UserServiceTest {
     UserLevelUpgradePolicy userLevelUpgradePolicy;
 
     @Autowired
-    private DataSource dataSource;
+    private PlatformTransactionManager transactionManager;
 
     List<User> users;
 
-
-
-    static class TestUserService extends UserService {
+    static class TestUserService extends UserServiceImpl {
         private String id;
 
         public TestUserService(final UserLevelUpgradePolicy userLevelUpgradePolicy,
-            final UserDao userDao, final DataSource dataSource, final String id) {
-            super(userLevelUpgradePolicy, userDao, dataSource);
+            final UserDao userDao, final String id) {
+            super(userLevelUpgradePolicy, userDao);
             this.id = id;
         }
 
-        public void upgradeLevel(User user) throws SQLException {
+        public void upgradeLevel(User user) {
             if (user.getId().equals(this.id)) {
                 throw new TestUserServiceException();
             }
         }
     }
 
-
     @BeforeEach
     void setUp() {
-        users = Arrays.asList(new User("TT", "박범진", "p1", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER-1, 0),
+        users = Arrays.asList(new User("TT", "박범진", "p1", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER - 1, 0),
             new User("DD", "박범진", "p1", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER, 0),
-            new User("LULU", "박범진", "p1", Level.SILVER, MIN_LOGCOUNT_FOR_SILVER, MIN_RECCOMEND_FOR_GOLD-1),
+            new User("LULU", "박범진", "p1", Level.SILVER, MIN_LOGCOUNT_FOR_SILVER, MIN_RECCOMEND_FOR_GOLD - 1),
             new User("LALA", "박범진", "p1", Level.SILVER, MIN_LOGCOUNT_FOR_SILVER, MIN_RECCOMEND_FOR_GOLD),
             new User("TOTO", "박범진", "p1", Level.GOLD, MIN_LOGCOUNT_FOR_SILVER, MIN_RECCOMEND_FOR_GOLD));
     }
@@ -113,20 +113,27 @@ class UserServiceTest {
         final User userUpdate = userDao.get(user.getId());
         if (expected) {
             assertThat(userUpdate.getLevel()).isEqualTo(user.getLevel().nextLevel());
-        } else{
+        } else {
             assertThat(userUpdate.getLevel()).isEqualTo(user.getLevel());
         }
     }
 
     @Test
     void upgradeOrNothing() {
-        TestUserService testUserService = new TestUserService(userLevelUpgradePolicy, userDao, dataSource, users.get(3).getId());
+        TestUserService testUserService = new TestUserService(userLevelUpgradePolicy, userDao, users.get(3).getId());
         userDao.deleteAll();
         users.forEach(userDao::add);
 
+        UserServiceTx txUserService = new UserServiceTx(testUserService, transactionManager);
+
+        userDao.deleteAll();
+        for (User user : users) {
+            userDao.add(user);
+        }
+
         try {
             testUserService.upgradeLevels();
-        } catch (TestUserServiceException | SQLException e) {
+        } catch (TestUserServiceException e) {
         }
         checkLevelUpgraded(users.get(1), false);
     }

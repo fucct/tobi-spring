@@ -11,6 +11,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import com.fucct.tobispring.user.DefaultUserLevelUpgradePolicy;
 import com.fucct.tobispring.user.UserLevelUpgradePolicy;
 import com.fucct.tobispring.user.UserService;
+import com.fucct.tobispring.user.UserServiceImpl;
+import com.fucct.tobispring.user.UserServiceTx;
 
 @Configuration
 public class DaoFactory {
@@ -66,7 +68,12 @@ public class DaoFactory {
 
     @Bean
     public UserService userService() {
-        return new UserService(userLevelUpgradePolicy(), userDao(), transactionManager());
+        return new UserServiceTx(userServiceImpl(), transactionManager());
+    }
+
+    @Bean
+    public UserService userServiceImpl() {
+        return new UserServiceImpl(userLevelUpgradePolicy(), userDao());
     }
 
     @Bean
