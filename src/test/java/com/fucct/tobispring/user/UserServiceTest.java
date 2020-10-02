@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +17,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -27,6 +30,8 @@ import com.fucct.tobispring.dao.UserDao;
 @SpringJUnitConfig
 @Import({UserServiceImpl.class, DaoFactory.class})
 class UserServiceTest {
+
+    @Autowired ApplicationContext context;
 
     @Autowired
     UserService userService;
@@ -119,12 +124,15 @@ class UserServiceTest {
     }
 
     @Test
-    void upgradeOrNothing() {
+    @DirtiesContext
+    void upgradeOrNothing() throws Exception {
         TestUserService testUserService = new TestUserService(userLevelUpgradePolicy, userDao, users.get(3).getId());
         userDao.deleteAll();
         users.forEach(userDao::add);
 
-        UserServiceTx txUserService = new UserServiceTx(testUserService, transactionManager);
+        TxProxyFactoryBean txProxyFactoryBean = context.getBean("&userService", TxProxyFactoryBean.class);
+        txProxyFactoryBean.setTarget(testUserService);
+        final UserService txUserService = (UserService)txProxyFactoryBean.getObject();
 
         userDao.deleteAll();
         for (User user : users) {
@@ -132,8 +140,9 @@ class UserServiceTest {
         }
 
         try {
-            testUserService.upgradeLevels();
-        } catch (TestUserServiceException e) {
+            txUserService.upgradeLevels();
+        } catch (Exception e) {
+            System.out.println("Zzz");
         }
         checkLevelUpgraded(users.get(1), false);
     }

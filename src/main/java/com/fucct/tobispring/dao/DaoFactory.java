@@ -1,6 +1,7 @@
 package com.fucct.tobispring.dao;
 
 import javax.sql.DataSource;
+import javax.xml.soap.MessageFactory;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,8 @@ import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import com.fucct.tobispring.user.DefaultUserLevelUpgradePolicy;
+import com.fucct.tobispring.user.MessageFactoryBean;
+import com.fucct.tobispring.user.TxProxyFactoryBean;
 import com.fucct.tobispring.user.UserLevelUpgradePolicy;
 import com.fucct.tobispring.user.UserService;
 import com.fucct.tobispring.user.UserServiceImpl;
@@ -67,8 +70,8 @@ public class DaoFactory {
     }
 
     @Bean
-    public UserService userService() {
-        return new UserServiceTx(userServiceImpl(), transactionManager());
+    public TxProxyFactoryBean userService() {
+        return new TxProxyFactoryBean(userServiceImpl(), transactionManager(), "upgradeLevels", UserService.class);
     }
 
     @Bean
@@ -81,5 +84,8 @@ public class DaoFactory {
         return new DefaultUserLevelUpgradePolicy(userDao());
     }
 
-
+    @Bean
+    public MessageFactoryBean message() {
+        return new MessageFactoryBean("Factory Bean");
+    }
 }
