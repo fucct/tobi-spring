@@ -3,6 +3,9 @@ package com.fucct.tobispring.dao;
 import javax.sql.DataSource;
 import javax.xml.soap.MessageFactory;
 
+import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.aop.support.DefaultPointcutAdvisor;
+import org.springframework.aop.support.NameMatchMethodPointcut;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -11,6 +14,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import com.fucct.tobispring.user.DefaultUserLevelUpgradePolicy;
 import com.fucct.tobispring.user.MessageFactoryBean;
+import com.fucct.tobispring.user.TransactionAdvice;
 import com.fucct.tobispring.user.TxProxyFactoryBean;
 import com.fucct.tobispring.user.UserLevelUpgradePolicy;
 import com.fucct.tobispring.user.UserService;
@@ -70,8 +74,11 @@ public class DaoFactory {
     }
 
     @Bean
-    public TxProxyFactoryBean userService() {
-        return new TxProxyFactoryBean(userServiceImpl(), transactionManager(), "upgradeLevels", UserService.class);
+    public ProxyFactoryBean userService() {
+        final ProxyFactoryBean pfBean = new ProxyFactoryBean();
+        pfBean.setTarget(userServiceImpl());
+        pfBean.addAdvisor(transactionAdvisor());
+        return pfBean;
     }
 
     @Bean
@@ -88,4 +95,22 @@ public class DaoFactory {
     public MessageFactoryBean message() {
         return new MessageFactoryBean("Factory Bean");
     }
+
+    @Bean
+    public TransactionAdvice transactionAdvice() {
+        return new TransactionAdvice(transactionManager());
+    }
+
+    @Bean
+    public NameMatchMethodPointcut transactionPointcut() {
+        final NameMatchMethodPointcut nameMatchMethodPointcut = new NameMatchMethodPointcut();
+        nameMatchMethodPointcut.setMappedName("upgrade*");
+        return nameMatchMethodPointcut;
+    }
+
+    @Bean
+    public DefaultPointcutAdvisor transactionAdvisor() {
+        return new DefaultPointcutAdvisor(transactionPointcut(), transactionAdvice());
+    }
+
 }

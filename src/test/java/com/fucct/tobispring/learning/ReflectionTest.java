@@ -7,6 +7,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.aop.support.DefaultPointcutAdvisor;
+import org.springframework.aop.support.NameMatchMethodPointcut;
 
 public class ReflectionTest {
 
@@ -31,5 +34,31 @@ public class ReflectionTest {
         final Hello proxyHello = (Hello)Proxy.newProxyInstance(getClass().getClassLoader(),
             new Class[] {Hello.class}, new UppercaseHandler(new HelloTarget()));
         assertThat(proxyHello.sayHello("dd")).isEqualTo("HELLO, DD");
+    }
+
+    @Test
+    void proxyFactoryBean() {
+        final ProxyFactoryBean pfBean = new ProxyFactoryBean();
+        pfBean.setTarget(new HelloTarget());
+        pfBean.addAdvice(new UppercaseAdvice());
+        Hello proxiedHello = (Hello)pfBean.getObject();
+        assertThat(proxiedHello.sayHello("dd")).isEqualTo("HELLO, DD");
+    }
+
+    @Test
+    void pointcutAdvisor() {
+        ProxyFactoryBean pfBean = new ProxyFactoryBean();
+        pfBean.setTarget(new HelloTarget());
+
+        NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
+        pointcut.setMappedName("sayH*");
+
+        pfBean.addAdvisor(new DefaultPointcutAdvisor(pointcut, new UppercaseAdvice()));
+
+        final Hello proxiedHello = (Hello)pfBean.getObject();
+
+        assertThat(proxiedHello.sayHello("dd")).isEqualTo("HELLO, DD");
+        assertThat(proxiedHello.sayHi("dd")).isEqualTo("HI, DD");
+        assertThat(proxiedHello.sayThankYou("dd")).isEqualTo("Thank you, dd");
     }
 }
