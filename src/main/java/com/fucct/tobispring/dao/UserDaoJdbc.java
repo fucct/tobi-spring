@@ -14,6 +14,7 @@ import com.fucct.tobispring.user.User;
 
 public class UserDaoJdbc implements UserDao {
     private final JdbcTemplate jdbcTemplate;
+    private final SqlService sqlService;
     private final RowMapper<User> userRowMapper = ((rs, rowNum) -> {
         User user = new User();
         user.setId(rs.getString("id"));
@@ -26,39 +27,40 @@ public class UserDaoJdbc implements UserDao {
         return user;
     });
 
-    public UserDaoJdbc(DataSource dataSource) {
+    public UserDaoJdbc(DataSource dataSource, SqlService sqlService) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.sqlService = sqlService;
     }
 
     public void add(User user) {
         this.jdbcTemplate.update(
-            "insert into accounts(id, name, password, level, login, recommend) values(?,?,?, ?, ?,?)", user.getId(),
+            sqlService.getSql("userAdd"), user.getId(),
             user.getName(), user.getPassword(), user.getLevel().intValue(), user.getLogin(), user.getRecommend());
     }
 
     public User get(String id) {
-        return this.jdbcTemplate.queryForObject("select * from accounts where accounts.id = ?",
+        return this.jdbcTemplate.queryForObject(sqlService.getSql("userGet"),
             new Object[] {id},
             userRowMapper);
     }
 
     @Override
     public List<User> getAll() {
-        return this.jdbcTemplate.query("select * from accounts ", userRowMapper);
+        return this.jdbcTemplate.query(sqlService.getSql("userGetAll"), userRowMapper);
     }
 
     public void deleteAll() {
-        this.jdbcTemplate.update(connection -> connection.prepareStatement("delete from accounts"));
+        this.jdbcTemplate.update(connection -> connection.prepareStatement(sqlService.getSql("userDeleteAll")));
     }
 
     public int getCount() {
-        return this.jdbcTemplate.queryForObject("select count(*) from accounts", Integer.class);
+        return this.jdbcTemplate.queryForObject(sqlService.getSql("userGetCount"), Integer.class);
     }
 
     @Override
     public void update(final User user) {
         this.jdbcTemplate.update(
-            "update accounts set name = ?, password = ?, level = ?, login = ?, recommend = ? where id = ? ",
+            sqlService.getSql("userUpdate"),
             user.getName(), user.getPassword(), user.getLevel().intValue(), user.getLogin(), user.getRecommend(),
             user.getId());
     }

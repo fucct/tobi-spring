@@ -1,5 +1,7 @@
 package com.fucct.tobispring.user;
 
+import java.util.List;
+
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -32,5 +34,20 @@ public class UserServiceTx implements UserService{
             this.transactionManager.rollback(status);
             throw e;
         }
+    }
+
+    @Override
+    public User get(final String id) {
+        return null;
+    }
+
+    @Override
+    public List<User> getAll() {
+        return null;
+    }
+
+    @Override
+    public void deleteAll() {
+
     }
 }

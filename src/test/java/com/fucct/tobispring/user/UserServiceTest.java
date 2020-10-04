@@ -4,7 +4,6 @@ import static com.fucct.tobispring.user.DefaultUserLevelUpgradePolicy.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -13,29 +12,35 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fucct.tobispring.dao.DaoFactory;
 import com.fucct.tobispring.dao.UserDao;
 
 @ExtendWith(MockitoExtension.class)
 @SpringJUnitConfig
-@Import({UserServiceImpl.class, DaoFactory.class})
+@Import({DaoFactory.class, TestConfig.class})
 class UserServiceTest {
 
     @Autowired ApplicationContext context;
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    @Qualifier("testUserService")
+    UserService testUserSerivce;
 
     @Autowired
     UserDao userDao;
@@ -48,19 +53,26 @@ class UserServiceTest {
 
     List<User> users;
 
-    static class TestUserService extends UserServiceImpl {
-        private String id;
+    static class TestUserServiceImpl extends UserServiceImpl {
+        private String id = "LALA";
 
-        public TestUserService(final UserLevelUpgradePolicy userLevelUpgradePolicy,
-            final UserDao userDao, final String id) {
+        public TestUserServiceImpl(final UserLevelUpgradePolicy userLevelUpgradePolicy, final UserDao userDao) {
             super(userLevelUpgradePolicy, userDao);
-            this.id = id;
+        }
+
+        @Override
+        public List<User> getAll() {
+            for (User user : super.getAll()) {
+                super.update(user);
+            }
+            return null;
         }
 
         public void upgradeLevel(User user) {
             if (user.getId().equals(this.id)) {
                 throw new TestUserServiceException();
             }
+            super.upgradeLevel(user);
         }
     }
 
@@ -125,15 +137,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DirtiesContext
     void upgradeOrNothing() throws Exception {
-        TestUserService testUserService = new TestUserService(userLevelUpgradePolicy, userDao, users.get(3).getId());
-        userDao.deleteAll();
-        users.forEach(userDao::add);
-
-        final ProxyFactoryBean txProxyFactoryBean = context.getBean("&userService", ProxyFactoryBean.class);
-        txProxyFactoryBean.setTarget(testUserService);
-        final UserService txUserService = (UserService)txProxyFactoryBean.getObject();
 
         userDao.deleteAll();
         for (User user : users) {
@@ -141,10 +145,21 @@ class UserServiceTest {
         }
 
         try {
-            txUserService.upgradeLevels();
+            testUserSerivce.upgradeLevels();
         } catch (Exception e) {
             System.out.println("Zzz");
         }
         checkLevelUpgraded(users.get(1), false);
+    }
+
+    @Test
+    void advisorAutoProxyCreator() {
+        assertThat(testUserSerivce).isInstanceOf(Proxy.class);
+    }
+
+    @Test
+    void readOnlyTransaction() {
+        assertThatThrownBy(() -> testUserSerivce.getAll())
+            .isInstanceOf(TransientDataAccessResourceException.class);
     }
 }

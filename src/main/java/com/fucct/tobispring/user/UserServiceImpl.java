@@ -1,14 +1,12 @@
 package com.fucct.tobispring.user;
 
-import java.sql.SQLException;
 import java.util.List;
 
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fucct.tobispring.dao.UserDao;
 
+@Transactional
 public class UserServiceImpl implements UserService{
 
     private final UserLevelUpgradePolicy userLevelUpgradePolicy;
@@ -17,6 +15,10 @@ public class UserServiceImpl implements UserService{
     public UserServiceImpl(final UserLevelUpgradePolicy userLevelUpgradePolicy, final UserDao userDao) {
         this.userLevelUpgradePolicy = userLevelUpgradePolicy;
         this.userDao = userDao;
+    }
+
+    public User get(String id) {
+        return userDao.get(id);
     }
 
     public void upgradeLevels() {
@@ -42,5 +44,18 @@ public class UserServiceImpl implements UserService{
             user.setLevel(Level.BASIC);
         }
         userDao.add(user);
+    }
+
+    public List<User> getAll() {
+        return userDao.getAll();
+    }
+
+    @Override
+    public void deleteAll() {
+        userDao.deleteAll();
+    }
+
+    protected void update(final User user) {
+        userDao.update(user);
     }
 }
